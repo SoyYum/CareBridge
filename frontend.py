@@ -24,8 +24,6 @@ DEFAULT_API_URL = "https://carebridge-gcfs.onrender.com"
 
 
 def get_api_url():
-    """Get the hosted backend URL from Streamlit secrets or environment."""
-
     try:
         secret_url = st.secrets.get("CAREBRIDGE_API_URL", "")
     except Exception:
@@ -58,7 +56,7 @@ for key, value in defaults.items():
 
 
 # ============================================================
-# CUSTOM STYLING
+# CUSTOM CSS
 # ============================================================
 
 st.markdown(
@@ -77,8 +75,6 @@ st.markdown(
         --soft-teal: #E7F3F1;
     }
 
-    /* Main application */
-
     .stApp {
         background: var(--background);
         color: var(--text);
@@ -96,8 +92,6 @@ st.markdown(
     [data-testid="stHeader"] {
         background: transparent;
     }
-
-    /* Typography */
 
     html, body, p, label, li,
     h1, h2, h3, h4, h5, h6 {
@@ -138,7 +132,7 @@ st.markdown(
         color: var(--text);
     }
 
-    /* Inputs */
+    /* Text inputs */
 
     input,
     textarea,
@@ -303,7 +297,7 @@ st.markdown(
         color: var(--text) !important;
     }
 
-    /* Expanders and alerts */
+    /* Expanders */
 
     [data-testid="stExpander"] {
         background: #FFFFFF !important;
@@ -318,8 +312,6 @@ st.markdown(
     [data-testid="stAlert"] p {
         color: var(--text) !important;
     }
-
-    /* Dividers */
 
     hr {
         border-color: var(--border) !important;
@@ -369,14 +361,6 @@ st.markdown(
         margin-bottom: 0.5rem;
     }
 
-    .cb-section-label {
-        color: var(--primary) !important;
-        font-size: 0.75rem;
-        font-weight: 750;
-        letter-spacing: 0.1em;
-        margin-bottom: 0.45rem;
-    }
-
     .cb-footer {
         color: var(--muted) !important;
         font-size: 0.82rem;
@@ -398,21 +382,6 @@ st.markdown(
         color: var(--muted);
         margin-bottom: 1rem;
     }
-
-    .cb-file-name {
-        font-size: 0.9rem;
-        font-weight: 600;
-        overflow-wrap: anywhere;
-    }
-
-    .cb-login-card {
-        background: #FFFFFF;
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 1.5rem;
-    }
-
-    /* Mobile layout */
 
     @media (max-width: 700px) {
         .block-container {
@@ -439,7 +408,6 @@ st.markdown(
 # ============================================================
 
 def api_call(method, path, *, timeout=120, **kwargs):
-    """Send authenticated requests to the FastAPI backend."""
 
     headers = dict(kwargs.pop("headers", {}) or {})
 
@@ -449,6 +417,7 @@ def api_call(method, path, *, timeout=120, **kwargs):
         )
 
     try:
+
         response = requests.request(
             method,
             API_URL + path,
@@ -479,6 +448,7 @@ def api_call(method, path, *, timeout=120, **kwargs):
         return response.json()
 
     except requests.Timeout:
+
         st.error(
             "The backend took too long to respond. "
             "It may be waking up after inactivity. "
@@ -486,15 +456,18 @@ def api_call(method, path, *, timeout=120, **kwargs):
         )
 
     except requests.ConnectionError:
+
         st.error(
             "Could not connect to the CareBridge backend. "
             "Please try again in a moment."
         )
 
     except requests.RequestException as exc:
+
         st.error(f"Request failed: {exc}")
 
     except ValueError:
+
         st.error("The backend returned an invalid response.")
 
     return None
@@ -505,17 +478,20 @@ def api_call(method, path, *, timeout=120, **kwargs):
 # ============================================================
 
 def reset_chat():
+
     st.session_state.session_id = None
     st.session_state.history = []
 
 
 def render_brand():
+
     st.markdown(
         """
         <div class="cb-brand">
             <div class="cb-brand-icon">CB</div>
             <div class="cb-brand-name">CareBridge</div>
         </div>
+
         <div class="cb-subtitle">
             Healthcare document intelligence
         </div>
@@ -525,7 +501,6 @@ def render_brand():
 
 
 def render_sources(sources):
-    """Display document references used to generate an answer."""
 
     if not sources:
         return
@@ -538,11 +513,17 @@ def render_sources(sources):
         for index, source in enumerate(sources, start=1):
 
             source_label = source.get("id") or f"S{index}"
-            document_name = source.get("document", "Document")
+
+            document_name = source.get(
+                "document",
+                "Document",
+            )
+
             page_number = source.get("page", "?")
 
             st.markdown(
-                f"**[{source_label}] {document_name} - Page {page_number}**"
+                f"**[{source_label}] {document_name} - "
+                f"Page {page_number}**"
             )
 
             excerpt = source.get("excerpt", "")
@@ -609,7 +590,7 @@ if not st.session_state.token:
             label_visibility="collapsed",
         )
 
-        with st.form("auth_form", clear_on_submit=False):
+        with st.form("auth_form"):
 
             email = st.text_input(
                 "Email address",
@@ -623,7 +604,8 @@ if not st.session_state.token:
             )
 
             submitted = st.form_submit_button(
-                "Continue" if mode == "Log in" else "Create account",
+                "Continue" if mode == "Log in"
+                else "Create account",
                 type="primary",
                 use_container_width=True,
             )
@@ -715,7 +697,10 @@ with st.sidebar:
 
     with logout_col:
 
-        if st.button("Log out", use_container_width=True):
+        if st.button(
+            "Log out",
+            use_container_width=True,
+        ):
 
             st.session_state.token = None
             reset_chat()
@@ -724,9 +709,7 @@ with st.sidebar:
 
     st.divider()
 
-    # --------------------------------------------------------
-    # DOCUMENT LIBRARY
-    # --------------------------------------------------------
+    # Document library
 
     st.markdown("### Document library")
 
@@ -793,11 +776,12 @@ with st.sidebar:
 
             with file_col:
 
-                filename = document.get("filename", "PDF")
-
-                st.markdown(
-                    f"**{filename}**"
+                filename = document.get(
+                    "filename",
+                    "PDF",
                 )
+
+                st.markdown(f"**{filename}**")
 
                 st.caption(
                     f"{document.get('chunks', 0)} indexed sections"
@@ -829,9 +813,7 @@ with st.sidebar:
 
     st.divider()
 
-    # --------------------------------------------------------
-    # LANGUAGE SELECTION
-    # --------------------------------------------------------
+    # Answer language
 
     st.markdown("### Answer language")
 
@@ -874,9 +856,7 @@ with st.sidebar:
 
     st.divider()
 
-    # --------------------------------------------------------
-    # CHAT HISTORY
-    # --------------------------------------------------------
+    # Conversation history
 
     st.markdown("### Conversations")
 
@@ -976,18 +956,21 @@ st.write("")
 metric_col1, metric_col2, metric_col3 = st.columns(3)
 
 with metric_col1:
+
     st.metric(
         "Documents",
         len(documents),
     )
 
 with metric_col2:
+
     st.metric(
         "Saved conversations",
         len(sessions),
     )
 
 with metric_col3:
+
     st.metric(
         "Answer language",
         language_labels[st.session_state.language],
@@ -996,6 +979,7 @@ with metric_col3:
 st.write("")
 
 st.divider()
+
 
 # ============================================================
 # DOCUMENT QUESTION ANSWERING
@@ -1032,17 +1016,22 @@ for item in st.session_state.history:
 
     if item["role"] == "user":
 
-        with st.chat_message("user", avatar="U"):
+        # No avatar argument: avoids Streamlit treating a
+        # character such as "U" as an image resource.
+
+        with st.chat_message("user"):
 
             st.markdown(item["content"])
 
     else:
 
-        with st.chat_message("assistant", avatar="C"):
+        with st.chat_message("assistant"):
 
             st.markdown(item["content"])
 
-            render_sources(item.get("sources", []))
+            render_sources(
+                item.get("sources", [])
+            )
 
 
 # ============================================================
@@ -1069,11 +1058,11 @@ if question:
         }
     )
 
-    with st.chat_message("user", avatar="U"):
+    with st.chat_message("user"):
 
         st.markdown(question)
 
-    with st.chat_message("assistant", avatar="C"):
+    with st.chat_message("assistant"):
 
         with st.spinner(
             "Searching your documents and preparing an answer..."

@@ -17,14 +17,53 @@ st.set_page_config(
 
 
 # ==================================================
+# CLOUD CONFIGURATION
+# ==================================================
+
+DEFAULT_API_URL = "https://carebridge-gcfs.onrender.com"
+
+
+def get_api_url():
+    """Read the backend URL from Streamlit secrets or environment."""
+
+    try:
+        secret_url = st.secrets.get("CAREBRIDGE_API_URL", "")
+    except Exception:
+        secret_url = ""
+
+    return (
+        secret_url
+        or os.getenv("CAREBRIDGE_API_URL")
+        or DEFAULT_API_URL
+    ).rstrip("/")
+
+
+API_URL = get_api_url()
+
+
+# ==================================================
+# SESSION STATE
+# ==================================================
+
+defaults = {
+    "token": None,
+    "session_id": None,
+    "history": [],
+    "language": "auto",
+}
+
+for key, value in defaults.items():
+    if key not in st.session_state:
+        st.session_state[key] = value
+
+
+# ==================================================
 # CUSTOM CSS
 # ==================================================
 
 st.markdown(
     """
     <style>
-    /* ---------- GLOBAL THEME ---------- */
-
     :root {
         --primary: #167D79;
         --primary-hover: #105E5A;
@@ -47,34 +86,20 @@ st.markdown(
         padding: 2rem 2.5rem 5rem;
     }
 
-    /* ---------- STREAMLIT HEADER ---------- */
-
     [data-testid="stHeader"],
-    [data-testid="stToolbar"],
-    [data-testid="stDecoration"] {
+    [data-testid="stToolbar"] {
         background: var(--background) !important;
-        color: var(--text) !important;
     }
-
-    [data-testid="stHeader"] button,
-    [data-testid="stToolbar"] button {
-        color: var(--text) !important;
-    }
-
-    /* ---------- TEXT ---------- */
 
     h1, h2, h3, h4, h5, h6,
     p, label, li, strong,
-    .stMarkdown,
-    [data-testid="stCaptionContainer"] {
+    .stMarkdown {
         color: var(--text) !important;
     }
 
     [data-testid="stCaptionContainer"] {
         color: var(--muted) !important;
     }
-
-    /* ---------- SIDEBAR ---------- */
 
     [data-testid="stSidebar"] {
         background: var(--sidebar) !important;
@@ -84,21 +109,13 @@ st.markdown(
     [data-testid="stSidebar"] h1,
     [data-testid="stSidebar"] h2,
     [data-testid="stSidebar"] h3,
-    [data-testid="stSidebar"] h4,
     [data-testid="stSidebar"] p,
     [data-testid="stSidebar"] label,
     [data-testid="stSidebar"] span {
         color: var(--text) !important;
     }
 
-    [data-testid="stSidebar"] [data-testid="stCaptionContainer"] {
-        color: var(--muted) !important;
-    }
-
-    /* ---------- INPUTS ---------- */
-
-    input,
-    textarea,
+    input, textarea,
     [data-baseweb="input"] input,
     [data-baseweb="textarea"] textarea {
         background: #FFFFFF !important;
@@ -114,8 +131,6 @@ st.markdown(
         -webkit-text-fill-color: #81928F !important;
     }
 
-    /* ---------- SELECT BOXES ---------- */
-
     [data-baseweb="select"] > div {
         background: #FFFFFF !important;
         border-color: var(--border) !important;
@@ -126,7 +141,6 @@ st.markdown(
         color: var(--text) !important;
     }
 
-    /* Dropdown menu */
     [data-baseweb="popover"],
     [data-baseweb="menu"],
     [role="listbox"] {
@@ -134,8 +148,7 @@ st.markdown(
         border: 1px solid var(--border) !important;
     }
 
-    [role="option"],
-    [role="listbox"] li {
+    [role="option"] {
         background: #FFFFFF !important;
         color: var(--text) !important;
     }
@@ -143,18 +156,13 @@ st.markdown(
     [role="option"]:hover,
     [role="option"][aria-selected="true"] {
         background: #EAF3F1 !important;
-        color: var(--text) !important;
     }
-
-    /* ---------- RADIO BUTTONS ---------- */
 
     [data-testid="stRadio"] label,
     [data-testid="stRadio"] p,
     [data-testid="stRadio"] span {
         color: var(--text) !important;
     }
-
-    /* ---------- BUTTONS ---------- */
 
     div.stButton > button,
     div.stFormSubmitButton > button {
@@ -170,7 +178,6 @@ st.markdown(
     div.stButton > button:hover {
         background: #EAF3F1 !important;
         border-color: var(--primary) !important;
-        color: var(--primary-dark, #105E5A) !important;
     }
 
     div.stButton > button[kind="primary"],
@@ -186,8 +193,6 @@ st.markdown(
         color: #FFFFFF !important;
     }
 
-    /* ---------- METRICS ---------- */
-
     [data-testid="stMetric"] {
         background: #FFFFFF !important;
         border: 1px solid var(--border);
@@ -200,8 +205,6 @@ st.markdown(
     [data-testid="stMetricDelta"] {
         color: var(--text) !important;
     }
-
-    /* ---------- CHAT ---------- */
 
     [data-testid="stChatMessage"] {
         background: #FFFFFF !important;
@@ -233,8 +236,6 @@ st.markdown(
         -webkit-text-fill-color: var(--text) !important;
     }
 
-    /* ---------- FILE UPLOADER ---------- */
-
     [data-testid="stFileUploader"] {
         background: #FFFFFF !important;
         border: 1px dashed #AFCBC5 !important;
@@ -246,15 +247,11 @@ st.markdown(
         color: var(--text) !important;
     }
 
-    /* ---------- EXPANDERS ---------- */
-
     [data-testid="stExpander"] {
         background: #FFFFFF !important;
         border: 1px solid var(--border) !important;
         border-radius: 12px;
     }
-
-    /* ---------- ALERTS ---------- */
 
     [data-testid="stAlert"] {
         border-radius: 12px;
@@ -263,8 +260,6 @@ st.markdown(
     [data-testid="stAlert"] p {
         color: var(--text) !important;
     }
-
-    /* ---------- BRANDING ---------- */
 
     .cb-brand {
         display: flex;
@@ -310,16 +305,6 @@ st.markdown(
         padding-top: 1.5rem;
     }
 
-    .cb-login-panel {
-        background: #FFFFFF;
-        border: 1px solid var(--border);
-        border-radius: 18px;
-        padding: 1.5rem;
-        box-shadow: 0 8px 28px rgba(27, 74, 70, 0.05);
-    }
-
-    /* ---------- RESPONSIVE ---------- */
-
     @media (max-width: 700px) {
         .block-container {
             padding: 1rem 1rem 4rem;
@@ -340,35 +325,11 @@ st.markdown(
 
 
 # ==================================================
-# CONFIGURATION AND SESSION STATE
-# ==================================================
-
-DEFAULT_API_URL = os.getenv(
-    "CAREBRIDGE_API_URL",
-    "http://localhost:8000"
-)
-
-if "api_url" not in st.session_state:
-    st.session_state.api_url = DEFAULT_API_URL
-
-if "token" not in st.session_state:
-    st.session_state.token = None
-
-if "session_id" not in st.session_state:
-    st.session_state.session_id = None
-
-if "history" not in st.session_state:
-    st.session_state.history = []
-
-if "language" not in st.session_state:
-    st.session_state.language = "auto"
-
-
-# ==================================================
 # API HELPER
 # ==================================================
 
-def api_call(method, path, *, timeout=600, **kwargs):
+def api_call(method, path, *, timeout=120, **kwargs):
+    """Make authenticated requests to the hosted FastAPI backend."""
 
     headers = dict(kwargs.pop("headers", {}) or {})
 
@@ -377,10 +338,9 @@ def api_call(method, path, *, timeout=600, **kwargs):
             f"Bearer {st.session_state.token}"
         )
 
-    url = st.session_state.api_url.rstrip("/") + path
+    url = API_URL + path
 
     try:
-
         response = requests.request(
             method,
             url,
@@ -390,11 +350,10 @@ def api_call(method, path, *, timeout=600, **kwargs):
         )
 
         if response.status_code >= 400:
-
             try:
                 detail = response.json().get(
                     "detail",
-                    response.text
+                    response.text,
                 )
             except (ValueError, AttributeError):
                 detail = response.text
@@ -402,7 +361,6 @@ def api_call(method, path, *, timeout=600, **kwargs):
             st.error(
                 f"API error ({response.status_code}): {detail}"
             )
-
             return None
 
         if not response.content:
@@ -411,29 +369,23 @@ def api_call(method, path, *, timeout=600, **kwargs):
         return response.json()
 
     except requests.Timeout:
-
         st.error(
-            "The request timed out. The first embedding, "
-            "reranking, or model call can take several minutes. "
-            "Check that the backend and Ollama are running."
+            "The backend took too long to respond. "
+            "Render may be waking up after inactivity. "
+            "Wait a little and try again."
         )
 
     except requests.ConnectionError:
-
         st.error(
-            "Cannot connect to the CareBridge API. "
-            f"Check the backend at {st.session_state.api_url}."
+            "Could not connect to the CareBridge backend. "
+            "Please try again in a moment."
         )
 
     except requests.RequestException as exc:
-
         st.error(f"Request failed: {exc}")
 
     except ValueError:
-
-        st.error(
-            "The API returned an invalid JSON response."
-        )
+        st.error("The backend returned an invalid response.")
 
     return None
 
@@ -443,50 +395,11 @@ def api_call(method, path, *, timeout=600, **kwargs):
 # ==================================================
 
 def reset_chat():
-
     st.session_state.session_id = None
     st.session_state.history = []
 
 
-def render_sources(sources):
-
-    if not sources:
-        return
-
-    with st.expander(
-        f"📚 Sources used ({len(sources)})",
-        expanded=False
-    ):
-
-        for index, source in enumerate(sources, start=1):
-
-            source_label = (
-                source.get("id") or f"S{index}"
-            )
-
-            document_name = source.get(
-                "document",
-                "Document"
-            )
-
-            page_number = source.get("page", "?")
-
-            st.markdown(
-                f"**[{source_label}] {document_name} "
-                f"· Page {page_number}**"
-            )
-
-            excerpt = source.get("excerpt", "")
-
-            if excerpt:
-                st.caption(excerpt)
-
-            if index < len(sources):
-                st.divider()
-
-
 def render_brand():
-
     st.markdown(
         """
         <div class="cb-brand">
@@ -501,24 +414,40 @@ def render_brand():
     )
 
 
+def render_sources(sources):
+    if not sources:
+        return
+
+    with st.expander(
+        f"📚 Sources used ({len(sources)})",
+        expanded=False,
+    ):
+        for index, source in enumerate(sources, start=1):
+            source_label = source.get("id") or f"S{index}"
+            document_name = source.get("document", "Document")
+            page_number = source.get("page", "?")
+
+            st.markdown(
+                f"**[{source_label}] {document_name} · Page {page_number}**"
+            )
+
+            excerpt = source.get("excerpt", "")
+
+            if excerpt:
+                st.caption(excerpt)
+
+            if index < len(sources):
+                st.divider()
+
+
 # ==================================================
-# SIDEBAR: API SETTINGS
+# SIDEBAR BRANDING
 # ==================================================
 
 with st.sidebar:
-
     st.markdown("### 🩺 CareBridge")
     st.caption("Document intelligence workspace")
-
-    st.text_input(
-        "Backend API address",
-        key="api_url",
-        help="Local development: http://localhost:8000",
-    )
-
-    st.caption(
-        "FastAPI backend · Retrieval-augmented generation"
-    )
+    st.caption("Connected to hosted FastAPI backend")
 
 
 # ==================================================
@@ -571,8 +500,7 @@ if not st.session_state.token:
             )
 
             submitted = st.form_submit_button(
-                "Continue" if mode == "Log in"
-                else "Create account",
+                "Continue" if mode == "Log in" else "Create account",
                 type="primary",
                 use_container_width=True,
             )
@@ -580,13 +508,11 @@ if not st.session_state.token:
         if submitted:
 
             if not email.strip() or not password:
-
                 st.warning(
                     "Enter both your email address and password."
                 )
 
             elif mode == "Create account" and len(password) < 10:
-
                 st.warning(
                     "Your password must contain at least 10 characters."
                 )
@@ -602,7 +528,7 @@ if not st.session_state.token:
                 result = api_call(
                     "POST",
                     endpoint,
-                    timeout=30,
+                    timeout=60,
                     json={
                         "email": email.strip(),
                         "password": password,
@@ -611,22 +537,21 @@ if not st.session_state.token:
 
                 if result and result.get("access_token"):
 
-                    st.session_state.token = (
-                        result["access_token"]
-                    )
+                    st.session_state.token = result["access_token"]
 
                     reset_chat()
+
                     st.rerun()
 
-    st.markdown(
-        """
-        <div class="cb-footer">
-            CareBridge is an educational document assistant,
-            not a medical professional.
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+        st.markdown(
+            """
+            <div class="cb-footer">
+                CareBridge is an educational document assistant,
+                not a medical professional.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
     st.stop()
 
@@ -638,13 +563,13 @@ if not st.session_state.token:
 documents = api_call(
     "GET",
     "/documents",
-    timeout=30
+    timeout=60,
 ) or []
 
 sessions = api_call(
     "GET",
     "/sessions",
-    timeout=30
+    timeout=60,
 ) or []
 
 
@@ -663,9 +588,7 @@ with st.sidebar:
         st.markdown("**Your workspace**")
 
     with logout_col:
-
         if st.button("Log out", use_container_width=True):
-
             st.session_state.token = None
             reset_chat()
             st.rerun()
@@ -692,7 +615,7 @@ with st.sidebar:
         if st.button(
             "Upload and index",
             type="primary",
-            use_container_width=True
+            use_container_width=True,
         ):
 
             with st.spinner(
@@ -702,7 +625,7 @@ with st.sidebar:
                 result = api_call(
                     "POST",
                     "/documents",
-                    timeout=900,
+                    timeout=300,
                     files={
                         "file": (
                             uploaded_pdf.name,
@@ -715,13 +638,11 @@ with st.sidebar:
             if result:
 
                 if result.get("duplicate"):
-
                     st.info(
                         "This PDF is already in your library."
                     )
 
                 else:
-
                     st.success(
                         f"Added {result.get('filename', uploaded_pdf.name)} "
                         f"({result.get('chunks', 0)} searchable sections)."
@@ -786,8 +707,11 @@ with st.sidebar:
     language_labels = {
         "auto": "Automatic",
         "English": "English",
-        "Hindi": "Hindi",
+        "Hindi": "Hindi (Experimental)",
     }
+
+    if st.session_state.language not in language_options:
+        st.session_state.language = "auto"
 
     st.session_state.language = st.selectbox(
         "Choose the language for new answers",
@@ -803,7 +727,12 @@ with st.sidebar:
     )
 
     if st.session_state.language == "Hindi":
-        st.caption("Hindi is selected for your next question.")
+        st.warning(
+            "Hindi responses are experimental. Medical terminology "
+            "and translations may contain inaccuracies. Please refer "
+            "to the original document and verify important information "
+            "with a healthcare professional."
+        )
 
     st.divider()
 
@@ -813,9 +742,8 @@ with st.sidebar:
 
     if st.button(
         "＋ Start a new chat",
-        use_container_width=True
+        use_container_width=True,
     ):
-
         reset_chat()
         st.rerun()
 
@@ -857,7 +785,7 @@ with st.sidebar:
                 messages = api_call(
                     "GET",
                     f"/sessions/{selected_id}/messages",
-                    timeout=30,
+                    timeout=60,
                 )
 
                 if messages is not None:
@@ -873,7 +801,7 @@ with st.sidebar:
                         for message in messages
                         if message.get("role") in {
                             "user",
-                            "assistant"
+                            "assistant",
                         }
                     ]
 
@@ -897,7 +825,7 @@ with metric_col2:
 with metric_col3:
     st.metric(
         "Answer language",
-        language_labels[st.session_state.language]
+        language_labels[st.session_state.language],
     )
 
 st.markdown("### Ask your documents")
@@ -919,7 +847,6 @@ st.markdown(
 # ==================================================
 
 if not documents:
-
     st.info(
         "📄 Upload a text-based PDF from the sidebar "
         "before asking document questions."
@@ -970,14 +897,13 @@ if question:
     with st.chat_message("assistant"):
 
         with st.spinner(
-            "Searching your documents and preparing an answer. "
-            "The first request may take longer while models load..."
+            "Searching your documents and preparing an answer..."
         ):
 
             result = api_call(
                 "POST",
                 "/chat",
-                timeout=900,
+                timeout=300,
                 json={
                     "session_id": st.session_state.session_id,
                     "question": question,
@@ -1008,8 +934,8 @@ if question:
         else:
 
             st.warning(
-                "No answer was returned. Check the backend "
-                "logs for details, then try again."
+                "No answer was returned. The backend may be waking "
+                "up or may have encountered an error. Please retry."
             )
 
 

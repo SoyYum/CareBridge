@@ -224,7 +224,8 @@ factual statement.
 If the excerpts do not contain the requested information,
 say that the information is not available in the document.
 
-Write complete sentences. Never stop in the middle of a sentence.
+Write complete sentences.
+Never stop in the middle of a sentence.
 
 Return ONLY the answer.
 """
@@ -239,8 +240,11 @@ Return ONLY the answer.
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM,
                 temperature=0.0,
-                max_output_tokens=1024,
-                top_p=0.8
+                max_output_tokens=2048,
+                top_p=0.8,
+                thinking_config=types.ThinkingConfig(
+                    thinking_level="low"
+                )
             )
         )
 
@@ -251,16 +255,15 @@ Return ONLY the answer.
 
         answer = response.text.strip()
 
-        # Detect whether Gemini stopped because it reached
-        # the configured output token limit.
+        # Check whether Gemini stopped because it
+        # reached the configured output token limit.
         candidates = response.candidates or []
 
         if candidates:
+
             finish_reason = candidates[0].finish_reason
 
-            if str(finish_reason).upper().endswith(
-                "MAX_TOKENS"
-            ):
+            if str(finish_reason).upper().endswith("MAX_TOKENS"):
                 raise RuntimeError(
                     "Gemini reached its output token limit. "
                     "The response may be incomplete."

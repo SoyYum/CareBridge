@@ -236,7 +236,7 @@ Return ONLY the answer.
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM,
                 temperature=0.0,
-                max_output_tokens=180,
+                max_output_tokens=512,
                 top_p=0.8
             )
         )

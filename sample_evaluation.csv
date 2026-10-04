@@ -1,0 +1,2 @@
+question,relevant_chunk_ids,retrieved_chunk_ids
+"What does the document say?","doc1:0;doc1:1","doc1:0;doc2:0;doc1:1"

@@ -46,6 +46,7 @@ class VectorStore:
         self.embedding_dimensions = settings.gemini_embedding_dimensions
 
         self._create_collection()
+        self._ensure_payload_indexes()
 
     def _create_collection(self):
 
@@ -61,6 +62,30 @@ class VectorStore:
                 ),
             )
 
+    def _ensure_payload_indexes(self):
+
+        collection_info = self.client.get_collection(
+            collection_name=self.collection_name
+        )
+
+        payload_schema = collection_info.payload_schema or {}
+
+        required_indexes = {
+            "owner_id": "integer",
+            "document_id": "integer",
+        }
+
+        for field_name, field_type in required_indexes.items():
+
+            if field_name not in payload_schema:
+
+                self.client.create_payload_index(
+                    collection_name=self.collection_name,
+                    field_name=field_name,
+                    field_schema=field_type,
+                    wait=True,
+                )
+
     def _embed(self, texts, task_type):
 
         if not texts:
@@ -68,7 +93,6 @@ class VectorStore:
 
         vectors = []
 
-        # Keep requests in manageable batches.
         batch_size = 50
 
         for start in range(0, len(texts), batch_size):

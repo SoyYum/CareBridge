@@ -1,30 +1,30 @@
 
 import os
+
 import requests
 import streamlit as st
 
 
-# ==================================================
+# ============================================================
 # PAGE CONFIGURATION
-# ==================================================
+# ============================================================
 
 st.set_page_config(
     page_title="CareBridge | Healthcare Assistant",
-    page_icon="🩺",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
 
-# ==================================================
-# CLOUD CONFIGURATION
-# ==================================================
+# ============================================================
+# BACKEND CONFIGURATION
+# ============================================================
 
 DEFAULT_API_URL = "https://carebridge-gcfs.onrender.com"
 
 
 def get_api_url():
-    """Read the backend URL from Streamlit secrets or environment."""
+    """Get the hosted backend URL from Streamlit secrets or environment."""
 
     try:
         secret_url = st.secrets.get("CAREBRIDGE_API_URL", "")
@@ -41,9 +41,9 @@ def get_api_url():
 API_URL = get_api_url()
 
 
-# ==================================================
+# ============================================================
 # SESSION STATE
-# ==================================================
+# ============================================================
 
 defaults = {
     "token": None,
@@ -57,53 +57,76 @@ for key, value in defaults.items():
         st.session_state[key] = value
 
 
-# ==================================================
-# CUSTOM CSS
-# ==================================================
+# ============================================================
+# CUSTOM STYLING
+# ============================================================
 
 st.markdown(
     """
     <style>
+
     :root {
         --primary: #167D79;
-        --primary-hover: #105E5A;
-        --background: #F5F9F8;
+        --primary-dark: #105E5A;
+        --background: #F5F8FA;
         --surface: #FFFFFF;
-        --sidebar: #EDF5F3;
-        --text: #183332;
-        --muted: #617875;
-        --border: #DCE9E6;
+        --sidebar: #F0F5F6;
+        --text: #172F3A;
+        --muted: #647985;
+        --border: #DCE5E9;
+        --soft-teal: #E7F3F1;
     }
 
-    html, body, .stApp,
+    /* Main application */
+
+    .stApp {
+        background: var(--background);
+        color: var(--text);
+    }
+
     [data-testid="stAppViewContainer"] {
-        background: var(--background) !important;
-        color: var(--text) !important;
+        background: var(--background);
     }
 
     .block-container {
-        max-width: 1250px;
-        padding: 2rem 2.5rem 5rem;
+        max-width: 1350px;
+        padding: 2rem 2.5rem 4rem;
     }
 
-    [data-testid="stHeader"],
-    [data-testid="stToolbar"] {
-        background: var(--background) !important;
+    [data-testid="stHeader"] {
+        background: transparent;
     }
 
-    h1, h2, h3, h4, h5, h6,
-    p, label, li, strong,
-    .stMarkdown {
-        color: var(--text) !important;
+    /* Typography */
+
+    html, body, p, label, li,
+    h1, h2, h3, h4, h5, h6 {
+        color: var(--text);
+    }
+
+    h1 {
+        font-weight: 750 !important;
+        letter-spacing: -1.3px;
+    }
+
+    h2, h3 {
+        font-weight: 650 !important;
+        letter-spacing: -0.4px;
     }
 
     [data-testid="stCaptionContainer"] {
-        color: var(--muted) !important;
+        color: var(--muted);
     }
 
+    /* Sidebar */
+
     [data-testid="stSidebar"] {
-        background: var(--sidebar) !important;
+        background: var(--sidebar);
         border-right: 1px solid var(--border);
+    }
+
+    [data-testid="stSidebar"] > div:first-child {
+        padding-top: 1.5rem;
     }
 
     [data-testid="stSidebar"] h1,
@@ -112,10 +135,13 @@ st.markdown(
     [data-testid="stSidebar"] p,
     [data-testid="stSidebar"] label,
     [data-testid="stSidebar"] span {
-        color: var(--text) !important;
+        color: var(--text);
     }
 
-    input, textarea,
+    /* Inputs */
+
+    input,
+    textarea,
     [data-baseweb="input"] input,
     [data-baseweb="textarea"] textarea {
         background: #FFFFFF !important;
@@ -127,13 +153,16 @@ st.markdown(
 
     input::placeholder,
     textarea::placeholder {
-        color: #81928F !important;
-        -webkit-text-fill-color: #81928F !important;
+        color: #81919A !important;
+        -webkit-text-fill-color: #81919A !important;
     }
+
+    /* Select boxes */
 
     [data-baseweb="select"] > div {
         background: #FFFFFF !important;
         border-color: var(--border) !important;
+        border-radius: 9px !important;
     }
 
     [data-baseweb="select"] *,
@@ -155,29 +184,27 @@ st.markdown(
 
     [role="option"]:hover,
     [role="option"][aria-selected="true"] {
-        background: #EAF3F1 !important;
+        background: var(--soft-teal) !important;
     }
 
-    [data-testid="stRadio"] label,
-    [data-testid="stRadio"] p,
-    [data-testid="stRadio"] span {
-        color: var(--text) !important;
-    }
+    /* Buttons */
 
     div.stButton > button,
     div.stFormSubmitButton > button {
         background: #FFFFFF !important;
         color: var(--primary) !important;
         border: 1px solid var(--border) !important;
-        border-radius: 10px !important;
+        border-radius: 9px !important;
         min-height: 2.65rem;
         font-weight: 600;
-        transition: 0.2s ease;
+        transition: all 0.2s ease;
     }
 
-    div.stButton > button:hover {
-        background: #EAF3F1 !important;
+    div.stButton > button:hover,
+    div.stFormSubmitButton > button:hover {
+        background: var(--soft-teal) !important;
         border-color: var(--primary) !important;
+        color: var(--primary-dark) !important;
     }
 
     div.stButton > button[kind="primary"],
@@ -189,15 +216,18 @@ st.markdown(
 
     div.stButton > button[kind="primary"]:hover,
     div.stFormSubmitButton > button[kind="primary"]:hover {
-        background: var(--primary-hover) !important;
+        background: var(--primary-dark) !important;
         color: #FFFFFF !important;
     }
 
+    /* Metrics */
+
     [data-testid="stMetric"] {
-        background: #FFFFFF !important;
+        background: #FFFFFF;
         border: 1px solid var(--border);
-        border-radius: 15px;
+        border-radius: 13px;
         padding: 1rem 1.2rem;
+        box-shadow: 0 2px 8px rgba(23, 47, 58, 0.025);
     }
 
     [data-testid="stMetricLabel"],
@@ -206,18 +236,24 @@ st.markdown(
         color: var(--text) !important;
     }
 
+    /* Chat messages */
+
     [data-testid="stChatMessage"] {
         background: #FFFFFF !important;
         border: 1px solid var(--border);
-        border-radius: 15px;
+        border-radius: 13px;
         padding: 1rem 1.2rem;
-        margin-bottom: 0.8rem;
+        margin-bottom: 0.85rem;
+        box-shadow: 0 2px 8px rgba(23, 47, 58, 0.025);
     }
 
     [data-testid="stChatMessage"] p,
     [data-testid="stChatMessage"] li {
         color: var(--text) !important;
+        line-height: 1.75;
     }
+
+    /* Chat input */
 
     [data-testid="stBottom"],
     [data-testid="stBottomBlockContainer"] {
@@ -227,7 +263,13 @@ st.markdown(
     [data-testid="stChatInput"] {
         background: #FFFFFF !important;
         border: 1px solid var(--border) !important;
-        border-radius: 14px !important;
+        border-radius: 12px !important;
+        box-shadow: 0 3px 12px rgba(23, 47, 58, 0.04);
+    }
+
+    [data-testid="stChatInput"]:focus-within {
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 0 2px rgba(22, 125, 121, 0.10);
     }
 
     [data-testid="stChatInput"] textarea {
@@ -236,47 +278,74 @@ st.markdown(
         -webkit-text-fill-color: var(--text) !important;
     }
 
+    /* PDF uploader */
+
     [data-testid="stFileUploader"] {
         background: #FFFFFF !important;
-        border: 1px dashed #AFCBC5 !important;
-        border-radius: 12px;
-        padding: 0.5rem;
+        border: 1px dashed #AFC5CC !important;
+        border-radius: 11px;
+        padding: 0.65rem;
     }
 
-    [data-testid="stFileUploader"] * {
+    [data-testid="stFileUploader"] section {
+        background: #FFFFFF !important;
+    }
+
+    [data-testid="stFileUploader"] button {
+        background: #FFFFFF !important;
+        color: var(--primary) !important;
+        border: 1px solid var(--border) !important;
+    }
+
+    [data-testid="stFileUploader"] *,
+    [data-testid="stFileUploader"] span,
+    [data-testid="stFileUploader"] small {
         color: var(--text) !important;
     }
+
+    /* Expanders and alerts */
 
     [data-testid="stExpander"] {
         background: #FFFFFF !important;
         border: 1px solid var(--border) !important;
-        border-radius: 12px;
+        border-radius: 11px;
     }
 
     [data-testid="stAlert"] {
-        border-radius: 12px;
+        border-radius: 10px;
     }
 
     [data-testid="stAlert"] p {
         color: var(--text) !important;
     }
 
+    /* Dividers */
+
+    hr {
+        border-color: var(--border) !important;
+    }
+
+    /* Branding */
+
     .cb-brand {
         display: flex;
         align-items: center;
-        gap: 14px;
-        margin-bottom: 0.3rem;
+        gap: 13px;
+        margin-bottom: 0.4rem;
     }
 
     .cb-brand-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: var(--soft-teal);
+        color: var(--primary);
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 54px;
-        height: 54px;
-        border-radius: 15px;
-        background: #DFF0EC;
-        font-size: 28px;
+        font-size: 20px;
+        font-weight: 800;
+        border: 1px solid #D3E8E4;
     }
 
     .cb-brand-name {
@@ -288,22 +357,62 @@ st.markdown(
 
     .cb-subtitle {
         color: var(--muted) !important;
-        margin: 0.2rem 0 1.5rem 68px;
+        font-size: 0.94rem;
+        margin: 0.25rem 0 1.7rem 61px;
     }
 
     .cb-eyebrow {
         color: var(--primary) !important;
+        font-size: 0.73rem;
+        font-weight: 750;
+        letter-spacing: 0.13em;
+        margin-bottom: 0.5rem;
+    }
+
+    .cb-section-label {
+        color: var(--primary) !important;
         font-size: 0.75rem;
         font-weight: 750;
-        letter-spacing: 0.12em;
+        letter-spacing: 0.1em;
+        margin-bottom: 0.45rem;
     }
 
     .cb-footer {
         color: var(--muted) !important;
         font-size: 0.82rem;
+        line-height: 1.6;
         text-align: center;
-        padding-top: 1.5rem;
+        padding: 1.2rem 0 0.5rem;
     }
+
+    .cb-sidebar-brand {
+        font-size: 1.35rem;
+        font-weight: 750;
+        letter-spacing: -0.5px;
+        color: var(--text);
+        margin-bottom: 0.2rem;
+    }
+
+    .cb-sidebar-description {
+        font-size: 0.85rem;
+        color: var(--muted);
+        margin-bottom: 1rem;
+    }
+
+    .cb-file-name {
+        font-size: 0.9rem;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+
+    .cb-login-card {
+        background: #FFFFFF;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1.5rem;
+    }
+
+    /* Mobile layout */
 
     @media (max-width: 700px) {
         .block-container {
@@ -318,18 +427,19 @@ st.markdown(
             margin-left: 0;
         }
     }
+
     </style>
     """,
     unsafe_allow_html=True,
 )
 
 
-# ==================================================
+# ============================================================
 # API HELPER
-# ==================================================
+# ============================================================
 
 def api_call(method, path, *, timeout=120, **kwargs):
-    """Make authenticated requests to the hosted FastAPI backend."""
+    """Send authenticated requests to the FastAPI backend."""
 
     headers = dict(kwargs.pop("headers", {}) or {})
 
@@ -338,18 +448,17 @@ def api_call(method, path, *, timeout=120, **kwargs):
             f"Bearer {st.session_state.token}"
         )
 
-    url = API_URL + path
-
     try:
         response = requests.request(
             method,
-            url,
+            API_URL + path,
             headers=headers,
             timeout=timeout,
             **kwargs,
         )
 
         if response.status_code >= 400:
+
             try:
                 detail = response.json().get(
                     "detail",
@@ -361,6 +470,7 @@ def api_call(method, path, *, timeout=120, **kwargs):
             st.error(
                 f"API error ({response.status_code}): {detail}"
             )
+
             return None
 
         if not response.content:
@@ -371,8 +481,8 @@ def api_call(method, path, *, timeout=120, **kwargs):
     except requests.Timeout:
         st.error(
             "The backend took too long to respond. "
-            "Render may be waking up after inactivity. "
-            "Wait a little and try again."
+            "It may be waking up after inactivity. "
+            "Please wait and try again."
         )
 
     except requests.ConnectionError:
@@ -390,9 +500,9 @@ def api_call(method, path, *, timeout=120, **kwargs):
     return None
 
 
-# ==================================================
+# ============================================================
 # HELPER FUNCTIONS
-# ==================================================
+# ============================================================
 
 def reset_chat():
     st.session_state.session_id = None
@@ -403,11 +513,11 @@ def render_brand():
     st.markdown(
         """
         <div class="cb-brand">
-            <div class="cb-brand-icon">🩺</div>
+            <div class="cb-brand-icon">CB</div>
             <div class="cb-brand-name">CareBridge</div>
         </div>
         <div class="cb-subtitle">
-            Your healthcare document companion
+            Healthcare document intelligence
         </div>
         """,
         unsafe_allow_html=True,
@@ -415,20 +525,24 @@ def render_brand():
 
 
 def render_sources(sources):
+    """Display document references used to generate an answer."""
+
     if not sources:
         return
 
     with st.expander(
-        f"📚 Sources used ({len(sources)})",
+        f"Sources used ({len(sources)})",
         expanded=False,
     ):
+
         for index, source in enumerate(sources, start=1):
+
             source_label = source.get("id") or f"S{index}"
             document_name = source.get("document", "Document")
             page_number = source.get("page", "?")
 
             st.markdown(
-                f"**[{source_label}] {document_name} · Page {page_number}**"
+                f"**[{source_label}] {document_name} - Page {page_number}**"
             )
 
             excerpt = source.get("excerpt", "")
@@ -440,25 +554,34 @@ def render_sources(sources):
                 st.divider()
 
 
-# ==================================================
+# ============================================================
 # SIDEBAR BRANDING
-# ==================================================
+# ============================================================
 
 with st.sidebar:
-    st.markdown("### 🩺 CareBridge")
-    st.caption("Document intelligence workspace")
-    st.caption("Connected to hosted FastAPI backend")
+
+    st.markdown(
+        '<div class="cb-sidebar-brand">CareBridge</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        '<div class="cb-sidebar-description">'
+        'Healthcare document intelligence workspace'
+        '</div>',
+        unsafe_allow_html=True,
+    )
 
 
-# ==================================================
+# ============================================================
 # AUTHENTICATION
-# ==================================================
+# ============================================================
 
 if not st.session_state.token:
 
     render_brand()
 
-    left, center, right = st.columns([1, 1.25, 1])
+    left, center, right = st.columns([1, 1.2, 1])
 
     with center:
 
@@ -467,17 +590,17 @@ if not st.session_state.token:
             unsafe_allow_html=True,
         )
 
-        st.subheader("Sign in to your workspace")
+        st.title("Your documents, understood.")
 
         st.markdown(
             """
-            <p style="color:#617875 !important;">
-                Upload your documents, ask questions, and
-                explore answers grounded in your files.
-            </p>
-            """,
-            unsafe_allow_html=True,
+            Upload healthcare documents, ask questions in natural
+            language, and receive answers grounded in the content
+            of your files.
+            """
         )
+
+        st.divider()
 
         mode = st.radio(
             "Account",
@@ -496,7 +619,7 @@ if not st.session_state.token:
             password = st.text_input(
                 "Password",
                 type="password",
-                placeholder="At least 10 characters",
+                placeholder="Enter your password",
             )
 
             submitted = st.form_submit_button(
@@ -508,11 +631,13 @@ if not st.session_state.token:
         if submitted:
 
             if not email.strip() or not password:
+
                 st.warning(
                     "Enter both your email address and password."
                 )
 
             elif mode == "Create account" and len(password) < 10:
+
                 st.warning(
                     "Your password must contain at least 10 characters."
                 )
@@ -546,8 +671,8 @@ if not st.session_state.token:
         st.markdown(
             """
             <div class="cb-footer">
-                CareBridge is an educational document assistant,
-                not a medical professional.
+                CareBridge is an educational document assistant.
+                It does not replace professional medical advice.
             </div>
             """,
             unsafe_allow_html=True,
@@ -556,9 +681,9 @@ if not st.session_state.token:
     st.stop()
 
 
-# ==================================================
+# ============================================================
 # LOAD USER DATA
-# ==================================================
+# ============================================================
 
 documents = api_call(
     "GET",
@@ -573,9 +698,9 @@ sessions = api_call(
 ) or []
 
 
-# ==================================================
+# ============================================================
 # SIDEBAR: USER WORKSPACE
-# ==================================================
+# ============================================================
 
 with st.sidebar:
 
@@ -584,20 +709,26 @@ with st.sidebar:
     user_col, logout_col = st.columns([3, 2])
 
     with user_col:
+
         st.caption("SIGNED IN")
         st.markdown("**Your workspace**")
 
     with logout_col:
+
         if st.button("Log out", use_container_width=True):
+
             st.session_state.token = None
             reset_chat()
+
             st.rerun()
 
     st.divider()
 
+    # --------------------------------------------------------
     # DOCUMENT LIBRARY
+    # --------------------------------------------------------
 
-    st.markdown("### 📄 Document library")
+    st.markdown("### Document library")
 
     st.caption(
         "Upload a text-based PDF to make it searchable."
@@ -638,11 +769,13 @@ with st.sidebar:
             if result:
 
                 if result.get("duplicate"):
+
                     st.info(
                         "This PDF is already in your library."
                     )
 
                 else:
+
                     st.success(
                         f"Added {result.get('filename', uploaded_pdf.name)} "
                         f"({result.get('chunks', 0)} searchable sections)."
@@ -662,7 +795,9 @@ with st.sidebar:
 
                 filename = document.get("filename", "PDF")
 
-                st.markdown(f"**{filename}**")
+                st.markdown(
+                    f"**{filename}**"
+                )
 
                 st.caption(
                     f"{document.get('chunks', 0)} indexed sections"
@@ -671,7 +806,7 @@ with st.sidebar:
             with delete_col:
 
                 if st.button(
-                    "✕",
+                    "X",
                     key=f"delete_doc_{document['id']}",
                     help=f"Delete {filename}",
                 ):
@@ -694,9 +829,11 @@ with st.sidebar:
 
     st.divider()
 
+    # --------------------------------------------------------
     # LANGUAGE SELECTION
+    # --------------------------------------------------------
 
-    st.markdown("### 🌐 Answer language")
+    st.markdown("### Answer language")
 
     language_options = [
         "auto",
@@ -727,6 +864,7 @@ with st.sidebar:
     )
 
     if st.session_state.language == "Hindi":
+
         st.warning(
             "Hindi responses are experimental. Medical terminology "
             "and translations may contain inaccuracies. Please refer "
@@ -736,21 +874,24 @@ with st.sidebar:
 
     st.divider()
 
+    # --------------------------------------------------------
     # CHAT HISTORY
+    # --------------------------------------------------------
 
-    st.markdown("### 💬 Conversations")
+    st.markdown("### Conversations")
 
     if st.button(
-        "＋ Start a new chat",
+        "Start a new chat",
         use_container_width=True,
     ):
+
         reset_chat()
         st.rerun()
 
     if sessions:
 
         session_options = {
-            f"{item['title']} · #{item['id']}": item["id"]
+            f"{item['title']} - #{item['id']}": item["id"]
             for item in sessions
         }
 
@@ -808,19 +949,43 @@ with st.sidebar:
                     st.rerun()
 
 
-# ==================================================
+# ============================================================
 # MAIN DASHBOARD
-# ==================================================
+# ============================================================
 
 render_brand()
+
+st.markdown(
+    '<div class="cb-eyebrow">YOUR WORKSPACE</div>',
+    unsafe_allow_html=True,
+)
+
+st.title("Document intelligence")
+
+st.markdown(
+    """
+    Search your uploaded healthcare documents and get
+    answers supported by relevant passages from your files.
+    """
+)
+
+st.write("")
+
+# Dashboard metrics
 
 metric_col1, metric_col2, metric_col3 = st.columns(3)
 
 with metric_col1:
-    st.metric("Documents", len(documents))
+    st.metric(
+        "Documents",
+        len(documents),
+    )
 
 with metric_col2:
-    st.metric("Saved conversations", len(sessions))
+    st.metric(
+        "Saved conversations",
+        len(sessions),
+    )
 
 with metric_col3:
     st.metric(
@@ -828,48 +993,61 @@ with metric_col3:
         language_labels[st.session_state.language],
     )
 
-st.markdown("### Ask your documents")
+st.write("")
+
+st.divider()
+
+# ============================================================
+# DOCUMENT QUESTION ANSWERING
+# ============================================================
 
 st.markdown(
-    """
-    <p style="color:#617875 !important;">
-        Ask a question about the PDFs in your library.
-        CareBridge searches relevant passages and uses them
-        to prepare a response.
-    </p>
-    """,
+    '<div class="cb-eyebrow">DOCUMENT ASSISTANT</div>',
     unsafe_allow_html=True,
 )
 
+st.subheader("Ask your documents")
 
-# ==================================================
-# EMPTY DOCUMENT STATE
-# ==================================================
+st.markdown(
+    """
+    Ask a question about the PDFs in your library.
+    CareBridge retrieves relevant passages and uses them
+    to prepare a document-grounded response.
+    """
+)
 
 if not documents:
+
     st.info(
-        "📄 Upload a text-based PDF from the sidebar "
-        "before asking document questions."
+        "Upload a text-based PDF from the sidebar before "
+        "asking questions."
     )
 
 
-# ==================================================
+# ============================================================
 # CONVERSATION HISTORY
-# ==================================================
+# ============================================================
 
 for item in st.session_state.history:
 
-    with st.chat_message(item["role"]):
+    if item["role"] == "user":
 
-        st.markdown(item["content"])
+        with st.chat_message("user", avatar="U"):
 
-        if item["role"] == "assistant":
+            st.markdown(item["content"])
+
+    else:
+
+        with st.chat_message("assistant", avatar="C"):
+
+            st.markdown(item["content"])
+
             render_sources(item.get("sources", []))
 
 
-# ==================================================
+# ============================================================
 # CHAT INPUT
-# ==================================================
+# ============================================================
 
 question = st.chat_input(
     "Ask a question about your uploaded documents...",
@@ -877,9 +1055,9 @@ question = st.chat_input(
 )
 
 
-# ==================================================
+# ============================================================
 # PROCESS QUESTION
-# ==================================================
+# ============================================================
 
 if question:
 
@@ -891,10 +1069,11 @@ if question:
         }
     )
 
-    with st.chat_message("user"):
+    with st.chat_message("user", avatar="U"):
+
         st.markdown(question)
 
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant", avatar="C"):
 
         with st.spinner(
             "Searching your documents and preparing an answer..."
@@ -939,19 +1118,19 @@ if question:
             )
 
 
-# ==================================================
+# ============================================================
 # MEDICAL DISCLAIMER
-# ==================================================
+# ============================================================
 
 st.divider()
 
 st.markdown(
     """
     <div class="cb-footer">
-        ⚕️ Educational use only. Do not use CareBridge for
-        emergencies, diagnosis, treatment decisions, or
-        medication changes. Always consult a qualified
-        healthcare professional.
+        Educational use only. CareBridge does not provide medical
+        diagnosis or treatment. Do not use it for emergencies,
+        treatment decisions, or medication changes. Always consult
+        a qualified healthcare professional.
     </div>
     """,
     unsafe_allow_html=True,

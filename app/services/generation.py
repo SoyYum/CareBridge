@@ -1,3 +1,4 @@
+
 import re
 
 from google import genai
@@ -223,6 +224,8 @@ factual statement.
 If the excerpts do not contain the requested information,
 say that the information is not available in the document.
 
+Write complete sentences. Never stop in the middle of a sentence.
+
 Return ONLY the answer.
 """
 
@@ -236,19 +239,39 @@ Return ONLY the answer.
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM,
                 temperature=0.0,
-                max_output_tokens=512,
+                max_output_tokens=1024,
                 top_p=0.8
             )
         )
 
-        answer = (response.text or "").strip()
-
-        if not answer:
+        if not response.text:
             raise RuntimeError(
                 "Gemini returned an empty answer."
             )
 
+        answer = response.text.strip()
+
+        # Detect whether Gemini stopped because it reached
+        # the configured output token limit.
+        candidates = response.candidates or []
+
+        if candidates:
+            finish_reason = candidates[0].finish_reason
+
+            if str(finish_reason).upper().endswith(
+                "MAX_TOKENS"
+            ):
+                raise RuntimeError(
+                    "Gemini reached its output token limit. "
+                    "The response may be incomplete."
+                )
+
         answer = _clean_answer(answer)
+
+        if not answer:
+            raise RuntimeError(
+                "Gemini returned an empty answer after cleaning."
+            )
 
         return (
             emergency_prefix(question)

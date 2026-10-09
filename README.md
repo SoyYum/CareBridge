@@ -1,115 +1,55 @@
-# CareBridge – Healthcare Document Intelligence Assistant
+# DocuMind — Document Intelligence Assistant
 
-CareBridge is a document-grounded healthcare information assistant that allows users to upload healthcare PDF documents, search their contents, and ask questions using natural language.
+DocuMind is a document-grounded AI assistant that lets users upload PDF documents, ask questions in natural language, and receive answers supported by relevant passages from their files.
 
-It uses Retrieval-Augmented Generation (RAG) to retrieve relevant passages from uploaded documents and generate answers grounded in those passages. Responses include source citations to help users trace information back to the original documents.
-
-**CareBridge is intended for educational and informational use only. It is not a medical diagnostic system and must not be used as a substitute for professional medical advice.**
-
-## Live Demo
-
-- **Frontend:** https://carebridge-v88or5uvp9vva8uhywungz.streamlit.app
-- **Backend:** https://carebridge-gcfs.onrender.com
-- **API Health Check:** https://carebridge-gcfs.onrender.com/health
+It combines retrieval-augmented generation (RAG), hybrid search, and source citations to make document exploration more efficient and transparent.
 
 ## Features
 
-- **User Authentication:** Secure registration and login using password hashing and JWT-based authentication.
-- **PDF Upload:** Upload text-based healthcare PDF documents for processing.
-- **Document Indexing:** Extract text, divide documents into smaller chunks, and generate vector embeddings.
-- **Semantic Search:** Retrieve relevant document passages based on the meaning of a user's question.
-- **Retrieval-Augmented Generation:** Generate answers using retrieved document context rather than relying solely on general model knowledge.
-- **Source Citations:** Display references to the documents and passages used to generate an answer.
-- **Document Management:** View uploaded documents and remove documents from the library.
-- **Chat Interface:** Ask natural-language questions about uploaded documents.
-- **Multilingual Responses:** Supports English and Hindi response modes.
-- **Safety Notices:** Display educational-use disclaimers with generated responses.
+- **Document question answering:** Ask questions about uploaded PDF files using natural language.
+- **Retrieval-Augmented Generation (RAG):** Generate answers using relevant passages retrieved from the user's documents.
+- **Hybrid retrieval:** Combine semantic vector search with keyword-based retrieval to improve relevance.
+- **Source citations:** Display supporting document passages and page information alongside answers.
+- **User authentication:** Register and log in to a personal workspace.
+- **Document isolation:** Keep document retrieval scoped to the authenticated user.
+- **Conversation history:** Save and revisit previous conversations.
+- **Multilingual interaction:** Request answers in English or Hindi, or use automatic language selection. Hindi support is experimental.
+- **Document management:** Upload, index, list, and delete PDFs through the interface.
+- **Responsive interface:** A Streamlit dashboard with document management and an interactive chat interface.
 
-## Technology Stack
+## Tech Stack
 
 | Component | Technology |
 |---|---|
 | Frontend | Streamlit |
-| Backend | FastAPI |
-| Database | PostgreSQL |
-| ORM | SQLAlchemy |
-| Vector Database | Qdrant Cloud |
-| Embeddings | Google Gemini Embedding API |
-| Language Model | Google Gemini API |
-| PDF Processing | PyPDF |
-| Authentication | JWT and bcrypt |
-| API Server | Uvicorn |
-| Backend Hosting | Render |
-| Frontend Hosting | Streamlit Community Cloud |
+| Backend API | FastAPI |
+| Language | Python |
+| Language model | Google Gemini API |
+| Embeddings | Gemini embedding model |
+| Vector database | Qdrant Cloud |
+| Relational database | PostgreSQL |
+| Authentication | JWT and password hashing |
+| Retrieval | Hybrid search with semantic and keyword retrieval |
+| Deployment | Streamlit Community Cloud and Render |
 
 ## Architecture
 
-CareBridge follows a client-server architecture.
+1. **Upload:** A user uploads a PDF through the Streamlit interface.
+2. **Ingestion:** The FastAPI backend extracts text and divides it into searchable chunks.
+3. **Indexing:** Document chunks are embedded and stored in Qdrant, alongside metadata used to associate them with the correct user and document.
+4. **Retrieval:** When a question is submitted, the backend searches for relevant passages.
+5. **Generation:** The retrieved context and question are passed to Gemini to generate a grounded response.
+6. **Citations:** The response includes references to the retrieved sources where available.
+7. **Persistence:** PostgreSQL stores application records, while the frontend allows users to revisit saved conversations and manage documents.
 
-1. The user interacts with the Streamlit frontend.
-2. The frontend communicates with the FastAPI backend through HTTP requests.
-3. Uploaded PDFs are processed and divided into smaller text chunks.
-4. Gemini generates embeddings for the document chunks.
-5. The embeddings and associated metadata are stored in Qdrant Cloud.
-6. When a user asks a question, the backend generates a query embedding and retrieves relevant passages from Qdrant.
-7. The retrieved passages are provided to Gemini as context.
-8. Gemini generates a document-grounded response.
-9. The backend returns the answer and its source references to the frontend.
+## Getting Started
 
-PostgreSQL stores user accounts, document metadata, chat sessions, and message history.
+### Prerequisites
 
-## Retrieval-Augmented Generation Pipeline
-
-The application uses the following workflow:
-
-**Document ingestion**
-
-- Extract text from uploaded PDF files.
-- Split extracted text into manageable chunks.
-- Generate vector embeddings using the Gemini embedding model.
-- Store embeddings and document metadata in Qdrant Cloud.
-
-**Question answering**
-
-- Accept a natural-language question.
-- Generate an embedding for the question.
-- Retrieve relevant chunks using semantic similarity.
-- Combine retrieved context with the user's question.
-- Generate an answer using Gemini.
-- Return the answer with source references.
-
-The generation instructions emphasize document grounding, relevance, citation accuracy, and avoiding unsupported medical claims.
-
-## Project Structure
-
-The main components are organized as follows. Adjust the paths below if your repository uses a different structure.
-
-```text
-CareBridge/
-│
-├── app/
-│   ├── main.py
-│   ├── config.py
-│   ├── database.py
-│   ├── models.py
-│   ├── schemas.py
-│   ├── security.py
-│   │
-│   └── services/
-│       ├── ingestion.py
-│       ├── vector_store.py
-│       ├── retrieval.py
-│       ├── rag.py
-│       ├── generation.py
-│       └── safety.py
-│
-├── frontend.py
-├── requirements.txt
-├── .gitignore
-└── README.md
-```
-
-## Local Setup
+- Python 3.11 or a compatible version supported by the project's dependencies
+- A Google Gemini API key
+- A Qdrant instance and API key
+- A PostgreSQL database for the deployed configuration
 
 ### 1. Clone the repository
 
@@ -121,24 +61,24 @@ cd CareBridge
 ### 2. Create a virtual environment
 
 ```bash
-python -m venv venv
+python -m venv .venv
 ```
 
-Activate it:
+Activate it on Windows:
 
-**Windows**
-
-```bash
-venv\Scripts\activate
+```powershell
+.venv\Scripts\Activate.ps1
 ```
 
-**Linux / macOS**
+On macOS or Linux:
 
 ```bash
-source venv/bin/activate
+source .venv/bin/activate
 ```
 
 ### 3. Install dependencies
+
+Install the dependencies declared in the repository:
 
 ```bash
 pip install -r requirements.txt
@@ -146,127 +86,108 @@ pip install -r requirements.txt
 
 ### 4. Configure environment variables
 
-Create a `.env` file in the project root or configure the corresponding environment variables in your hosting platform.
+Create a local `.env` file using the variable names expected by the backend configuration.
+
+Typical settings include:
 
 ```env
 DATABASE_URL=your_postgresql_connection_string
-
-JWT_SECRET=your_secure_random_secret
+JWT_SECRET=your_long_random_secret
 JWT_ALGORITHM=HS256
 ACCESS_TOKEN_MINUTES=120
 
 GEMINI_API_KEY=your_gemini_api_key
-GEMINI_MODEL=your_configured_gemini_generation_model
-GEMINI_EMBEDDING_MODEL=gemini-embedding-001
+GEMINI_MODEL=your_configured_gemini_model
+GEMINI_EMBEDDING_MODEL=your_configured_embedding_model
 GEMINI_EMBEDDING_DIMENSIONS=768
 
-QDRANT_URL=your_qdrant_cluster_url
+QDRANT_URL=your_qdrant_url
 QDRANT_API_KEY=your_qdrant_api_key
 QDRANT_COLLECTION=carebridge_chunks
 ```
 
-Do not commit `.env` files, API keys, database credentials, or other secrets to GitHub.
+Use the exact environment variable names expected by your current configuration. Keep `.env` out of version control and never commit API keys, database credentials, or production secrets.
 
 ### 5. Start the backend
+
+From the repository root, run:
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
-The backend will be available at:
+The API should be available at:
 
 ```text
 http://127.0.0.1:8000
 ```
 
-API documentation:
+Interactive API documentation is available at:
 
 ```text
 http://127.0.0.1:8000/docs
 ```
 
-### 6. Start the frontend
+### 6. Configure the frontend
 
-Open another terminal, activate the virtual environment, and run:
+Set the backend URL for Streamlit using the existing environment variable:
+
+```env
+CAREBRIDGE_API_URL=http://127.0.0.1:8000
+```
+
+For Streamlit Community Cloud, configure the equivalent value in the application's secrets settings. Use the deployed backend URL for a hosted frontend.
+
+### 7. Start the frontend
 
 ```bash
 streamlit run frontend.py
 ```
 
-The frontend will be available at:
-
-```text
-http://localhost:8501
-```
+Open the local URL printed by Streamlit, create an account, upload a PDF, and start asking questions.
 
 ## Deployment
 
-CareBridge is deployed using separate hosting services:
+The application can be deployed using the following arrangement:
 
-- **Streamlit Community Cloud:** Hosts the frontend.
-- **Render:** Hosts the FastAPI backend.
-- **PostgreSQL hosting:** Stores application data.
-- **Qdrant Cloud:** Stores vector embeddings and document chunks.
-- **Google Gemini API:** Handles embedding generation and answer generation.
+- **Frontend:** Streamlit Community Cloud
+- **Backend:** Render
+- **Vector storage:** Qdrant Cloud
+- **Relational storage:** PostgreSQL
+- **Model API:** Google Gemini
 
-The frontend communicates with the deployed backend using its configured API URL. Deployment credentials and API keys are stored as environment variables rather than hardcoded in the source code.
+Configure all required credentials and service URLs in the respective hosting platforms' environment-variable or secrets settings. Do not commit production credentials to the repository.
 
-Free hosting services may have usage limits, inactivity-related sleep, or resource restrictions.
+Free hosting tiers may sleep after periods of inactivity, causing the first request to take longer while a service wakes up.
 
-## API Endpoints
+## Limitations
 
-| Method | Endpoint | Purpose |
-|---|---|---|
-| GET | `/health` | Check backend availability |
-| POST | `/auth/register` | Register a new user |
-| POST | `/auth/login` | Authenticate a user |
-| GET | `/me` | Retrieve authenticated user information |
-| POST | `/documents` | Upload and index a PDF |
-| GET | `/documents` | List uploaded documents |
-| DELETE | `/documents/{document_id}` | Delete a document |
-| POST | `/chat` | Ask a question about uploaded documents |
-| GET | `/sessions` | Retrieve chat sessions |
-| GET | `/sessions/{session_id}/messages` | Retrieve messages from a chat session |
+- PDF documents are supported by the current upload workflow.
+- Scanned PDFs may require OCR before their contents can be retrieved.
+- Answer quality depends on document quality, retrieval relevance, and model output.
+- Citations help users verify responses but do not guarantee that every generated statement is correct.
+- Hindi responses are experimental and may contain translation inaccuracies.
+- Large documents may take longer to upload and index.
+- The application is intended as a portfolio and demonstration project, not a production-grade document management platform.
 
-Protected endpoints require a valid bearer token.
+## Security Notes
 
-## Security and Limitations
-
-- Passwords are stored as hashes rather than plaintext.
-- JWT authentication protects user-specific endpoints.
-- Authentication endpoints use rate limiting.
-- Uploaded documents are associated with their respective users.
-- Vector retrieval applies user-level filtering.
-- API credentials are configured through environment variables.
-
-Current limitations:
-
-- Scanned PDFs requiring OCR are not supported.
-- Answer quality depends on the content and quality of uploaded documents.
-- Semantic retrieval may occasionally return irrelevant passages.
-- The application is designed as an educational demonstration, not a production healthcare system.
-- Free hosting and API tiers may impose usage and availability restrictions.
-
-Only public, synthetic, or otherwise non-sensitive sample documents should be used in the public demonstration.
+- Authentication is required to access a user's workspace.
+- Document retrieval and deletion should remain scoped to the authenticated user.
+- Use a strong, private JWT signing secret.
+- Store API keys and database credentials in environment variables or hosting secrets.
+- Use HTTPS for deployed services.
+- Do not upload confidential documents to a demonstration deployment unless its data handling and access controls are appropriate for that information.
 
 ## Future Improvements
 
-- Add OCR support for scanned PDFs.
-- Improve retrieval evaluation and answer-quality measurement.
-- Add more advanced document filtering and search.
-- Improve multilingual response quality.
-- Introduce automated evaluation for citation accuracy and retrieval relevance.
-- Add document preview and page-level navigation.
+- Support for DOCX and TXT documents
+- Improved retrieval evaluation and ranking
+- Better document previews and citation navigation
+- Additional language support
+- More comprehensive automated tests
+- Enhanced ingestion for scanned documents
 
-## Disclaimer
+## License
 
-CareBridge provides educational information based on uploaded documents. It does not provide medical diagnoses, treatment recommendations, or emergency assistance.
-
-Always consult a qualified healthcare professional for medical concerns.
-
-## Author
-
-**Soyam Bais**  
-Indian Institute of Technology Patna
-
-GitHub: https://github.com/SoyYum
+Add a license file if you intend to distribute this project under a specific open-source license. Until then, no open-source license is implied by this README.

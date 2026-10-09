@@ -1,4 +1,3 @@
-
 import os
 
 import requests
@@ -10,7 +9,7 @@ import streamlit as st
 # ============================================================
 
 st.set_page_config(
-    page_title="CareBridge | Healthcare Assistant",
+    page_title="DocuMind | Document Assistant",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -62,7 +61,6 @@ for key, value in defaults.items():
 st.markdown(
     """
     <style>
-
     :root {
         --primary: #167D79;
         --primary-dark: #105E5A;
@@ -75,13 +73,10 @@ st.markdown(
         --soft-teal: #E7F3F1;
     }
 
-    .stApp {
-        background: var(--background);
-        color: var(--text);
-    }
-
+    .stApp,
     [data-testid="stAppViewContainer"] {
         background: var(--background);
+        color: var(--text);
     }
 
     .block-container {
@@ -132,7 +127,7 @@ st.markdown(
         color: var(--text);
     }
 
-    /* Text inputs */
+    /* Inputs */
 
     input,
     textarea,
@@ -192,6 +187,7 @@ st.markdown(
         min-height: 2.65rem;
         font-weight: 600;
         transition: all 0.2s ease;
+        box-shadow: 0 2px 7px rgba(23, 47, 58, 0.035);
     }
 
     div.stButton > button:hover,
@@ -214,7 +210,7 @@ st.markdown(
         color: #FFFFFF !important;
     }
 
-    /* Metrics */
+    /* Dashboard metrics */
 
     [data-testid="stMetric"] {
         background: #FFFFFF;
@@ -222,6 +218,12 @@ st.markdown(
         border-radius: 13px;
         padding: 1rem 1.2rem;
         box-shadow: 0 2px 8px rgba(23, 47, 58, 0.025);
+        transition: transform 160ms ease, box-shadow 160ms ease;
+    }
+
+    [data-testid="stMetric"]:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(23, 47, 58, 0.07);
     }
 
     [data-testid="stMetricLabel"],
@@ -239,6 +241,11 @@ st.markdown(
         padding: 1rem 1.2rem;
         margin-bottom: 0.85rem;
         box-shadow: 0 2px 8px rgba(23, 47, 58, 0.025);
+        transition: box-shadow 160ms ease;
+    }
+
+    [data-testid="stChatMessage"]:hover {
+        box-shadow: 0 6px 20px rgba(23, 47, 58, 0.055);
     }
 
     [data-testid="stChatMessage"] p,
@@ -297,7 +304,7 @@ st.markdown(
         color: var(--text) !important;
     }
 
-    /* Expanders */
+    /* Expanders and alerts */
 
     [data-testid="stExpander"] {
         background: #FFFFFF !important;
@@ -330,18 +337,25 @@ st.markdown(
         width: 48px;
         height: 48px;
         border-radius: 12px;
-        background: var(--soft-teal);
+        background: linear-gradient(
+            135deg, #DDF5EF 0%, #E8EEFF 100%
+        );
         color: var(--primary);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 20px;
         font-weight: 800;
-        border: 1px solid #D3E8E4;
+        border: 1px solid #D5E6E8;
+        flex-shrink: 0;
     }
 
     .cb-brand-name {
-        color: var(--text) !important;
+        background: linear-gradient(
+            90deg, #173B46 0%, #167D79 90%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
         font-size: 2rem;
         font-weight: 750;
         letter-spacing: -1px;
@@ -396,7 +410,6 @@ st.markdown(
             margin-left: 0;
         }
     }
-
     </style>
     """,
     unsafe_allow_html=True,
@@ -408,7 +421,6 @@ st.markdown(
 # ============================================================
 
 def api_call(method, path, *, timeout=120, **kwargs):
-
     headers = dict(kwargs.pop("headers", {}) or {})
 
     if st.session_state.token:
@@ -417,7 +429,6 @@ def api_call(method, path, *, timeout=120, **kwargs):
         )
 
     try:
-
         response = requests.request(
             method,
             API_URL + path,
@@ -427,7 +438,6 @@ def api_call(method, path, *, timeout=120, **kwargs):
         )
 
         if response.status_code >= 400:
-
             try:
                 detail = response.json().get(
                     "detail",
@@ -439,7 +449,6 @@ def api_call(method, path, *, timeout=120, **kwargs):
             st.error(
                 f"API error ({response.status_code}): {detail}"
             )
-
             return None
 
         if not response.content:
@@ -448,7 +457,6 @@ def api_call(method, path, *, timeout=120, **kwargs):
         return response.json()
 
     except requests.Timeout:
-
         st.error(
             "The backend took too long to respond. "
             "It may be waking up after inactivity. "
@@ -456,18 +464,15 @@ def api_call(method, path, *, timeout=120, **kwargs):
         )
 
     except requests.ConnectionError:
-
         st.error(
-            "Could not connect to the CareBridge backend. "
+            "Could not connect to the document assistant backend. "
             "Please try again in a moment."
         )
 
     except requests.RequestException as exc:
-
         st.error(f"Request failed: {exc}")
 
     except ValueError:
-
         st.error("The backend returned an invalid response.")
 
     return None
@@ -478,22 +483,19 @@ def api_call(method, path, *, timeout=120, **kwargs):
 # ============================================================
 
 def reset_chat():
-
     st.session_state.session_id = None
     st.session_state.history = []
 
 
 def render_brand():
-
     st.markdown(
         """
         <div class="cb-brand">
-            <div class="cb-brand-icon">CB</div>
-            <div class="cb-brand-name">CareBridge</div>
+            <div class="cb-brand-icon">DM</div>
+            <div class="cb-brand-name">DocuMind</div>
         </div>
-
         <div class="cb-subtitle">
-            Healthcare document intelligence
+            Your personal document intelligence workspace
         </div>
         """,
         unsafe_allow_html=True,
@@ -501,7 +503,6 @@ def render_brand():
 
 
 def render_sources(sources):
-
     if not sources:
         return
 
@@ -509,9 +510,7 @@ def render_sources(sources):
         f"Sources used ({len(sources)})",
         expanded=False,
     ):
-
         for index, source in enumerate(sources, start=1):
-
             source_label = source.get("id") or f"S{index}"
 
             document_name = source.get(
@@ -540,15 +539,14 @@ def render_sources(sources):
 # ============================================================
 
 with st.sidebar:
-
     st.markdown(
-        '<div class="cb-sidebar-brand">CareBridge</div>',
+        '<div class="cb-sidebar-brand">DocuMind</div>',
         unsafe_allow_html=True,
     )
 
     st.markdown(
         '<div class="cb-sidebar-description">'
-        'Healthcare document intelligence workspace'
+        'Your personal document intelligence workspace'
         '</div>',
         unsafe_allow_html=True,
     )
@@ -559,13 +557,11 @@ with st.sidebar:
 # ============================================================
 
 if not st.session_state.token:
-
     render_brand()
 
     left, center, right = st.columns([1, 1.2, 1])
 
     with center:
-
         st.markdown(
             '<div class="cb-eyebrow">WELCOME</div>',
             unsafe_allow_html=True,
@@ -575,9 +571,9 @@ if not st.session_state.token:
 
         st.markdown(
             """
-            Upload healthcare documents, ask questions in natural
-            language, and receive answers grounded in the content
-            of your files.
+            Upload your PDFs, ask questions in natural
+            language, and receive answers grounded in the
+            content of your files.
             """
         )
 
@@ -591,7 +587,6 @@ if not st.session_state.token:
         )
 
         with st.form("auth_form"):
-
             email = st.text_input(
                 "Email address",
                 placeholder="you@example.com",
@@ -611,21 +606,17 @@ if not st.session_state.token:
             )
 
         if submitted:
-
             if not email.strip() or not password:
-
                 st.warning(
                     "Enter both your email address and password."
                 )
 
             elif mode == "Create account" and len(password) < 10:
-
                 st.warning(
                     "Your password must contain at least 10 characters."
                 )
 
             else:
-
                 endpoint = (
                     "/auth/login"
                     if mode == "Log in"
@@ -643,18 +634,15 @@ if not st.session_state.token:
                 )
 
                 if result and result.get("access_token"):
-
                     st.session_state.token = result["access_token"]
-
                     reset_chat()
-
                     st.rerun()
 
         st.markdown(
             """
             <div class="cb-footer">
-                CareBridge is an educational document assistant.
-                It does not replace professional medical advice.
+                DocuMind helps you explore your documents.
+                Always verify important details against the original sources.
             </div>
             """,
             unsafe_allow_html=True,
@@ -685,26 +673,21 @@ sessions = api_call(
 # ============================================================
 
 with st.sidebar:
-
     st.divider()
 
     user_col, logout_col = st.columns([3, 2])
 
     with user_col:
-
         st.caption("SIGNED IN")
         st.markdown("**Your workspace**")
 
     with logout_col:
-
         if st.button(
             "Log out",
             use_container_width=True,
         ):
-
             st.session_state.token = None
             reset_chat()
-
             st.rerun()
 
     st.divider()
@@ -725,17 +708,14 @@ with st.sidebar:
     )
 
     if uploaded_pdf is not None:
-
         if st.button(
             "Upload and index",
             type="primary",
             use_container_width=True,
         ):
-
             with st.spinner(
                 "Reading the PDF and building its search index..."
             ):
-
                 result = api_call(
                     "POST",
                     "/documents",
@@ -750,15 +730,11 @@ with st.sidebar:
                 )
 
             if result:
-
                 if result.get("duplicate"):
-
                     st.info(
                         "This PDF is already in your library."
                     )
-
                 else:
-
                     st.success(
                         f"Added {result.get('filename', uploaded_pdf.name)} "
                         f"({result.get('chunks', 0)} searchable sections)."
@@ -769,13 +745,10 @@ with st.sidebar:
     st.markdown("#### Your files")
 
     if documents:
-
         for document in documents:
-
             file_col, delete_col = st.columns([5, 1])
 
             with file_col:
-
                 filename = document.get(
                     "filename",
                     "PDF",
@@ -788,13 +761,11 @@ with st.sidebar:
                 )
 
             with delete_col:
-
                 if st.button(
                     "X",
                     key=f"delete_doc_{document['id']}",
                     help=f"Delete {filename}",
                 ):
-
                     deleted = api_call(
                         "DELETE",
                         f"/documents/{document['id']}",
@@ -806,9 +777,8 @@ with st.sidebar:
                         st.rerun()
 
     else:
-
         st.caption(
-            "Your library is empty. Upload a PDF to get started."
+            "Your library is empty. Add your first PDF to get started."
         )
 
     st.divider()
@@ -846,12 +816,10 @@ with st.sidebar:
     )
 
     if st.session_state.language == "Hindi":
-
         st.warning(
-            "Hindi responses are experimental. Medical terminology "
-            "and translations may contain inaccuracies. Please refer "
-            "to the original document and verify important information "
-            "with a healthcare professional."
+            "Hindi responses are experimental and may contain "
+            "translation inaccuracies. Check important details "
+            "against the original document."
         )
 
     st.divider()
@@ -864,12 +832,10 @@ with st.sidebar:
         "Start a new chat",
         use_container_width=True,
     ):
-
         reset_chat()
         st.rerun()
 
     if sessions:
-
         session_options = {
             f"{item['title']} - #{item['id']}": item["id"]
             for item in sessions
@@ -898,11 +864,9 @@ with st.sidebar:
         )
 
         if selected_label:
-
             selected_id = session_options[selected_label]
 
             if selected_id != st.session_state.session_id:
-
                 messages = api_call(
                     "GET",
                     f"/sessions/{selected_id}/messages",
@@ -910,7 +874,6 @@ with st.sidebar:
                 )
 
                 if messages is not None:
-
                     st.session_state.session_id = selected_id
 
                     st.session_state.history = [
@@ -940,12 +903,12 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.title("Document intelligence")
+st.title("Your document workspace")
 
 st.markdown(
     """
-    Search your uploaded healthcare documents and get
-    answers supported by relevant passages from your files.
+    Search your uploaded documents and get answers
+    supported by relevant passages from your files.
     """
 )
 
@@ -956,28 +919,24 @@ st.write("")
 metric_col1, metric_col2, metric_col3 = st.columns(3)
 
 with metric_col1:
-
     st.metric(
         "Documents",
         len(documents),
     )
 
 with metric_col2:
-
     st.metric(
         "Saved conversations",
         len(sessions),
     )
 
 with metric_col3:
-
     st.metric(
         "Answer language",
         language_labels[st.session_state.language],
     )
 
 st.write("")
-
 st.divider()
 
 
@@ -995,16 +954,14 @@ st.subheader("Ask your documents")
 st.markdown(
     """
     Ask a question about the PDFs in your library.
-    CareBridge retrieves relevant passages and uses them
+    DocuMind retrieves relevant passages and uses them
     to prepare a document-grounded response.
     """
 )
 
 if not documents:
-
     st.info(
-        "Upload a text-based PDF from the sidebar before "
-        "asking questions."
+        "Add a PDF from the sidebar before asking questions."
     )
 
 
@@ -1013,20 +970,14 @@ if not documents:
 # ============================================================
 
 for item in st.session_state.history:
-
     if item["role"] == "user":
-
-        # No avatar argument: avoids Streamlit treating a
-        # character such as "U" as an image resource.
-
+        # Do not pass a text character as an avatar:
+        # Streamlit may interpret it as an image resource.
         with st.chat_message("user"):
-
             st.markdown(item["content"])
 
     else:
-
         with st.chat_message("assistant"):
-
             st.markdown(item["content"])
 
             render_sources(
@@ -1039,7 +990,7 @@ for item in st.session_state.history:
 # ============================================================
 
 question = st.chat_input(
-    "Ask a question about your uploaded documents...",
+    "Ask a question about your documents...",
     disabled=not bool(documents),
 )
 
@@ -1049,7 +1000,6 @@ question = st.chat_input(
 # ============================================================
 
 if question:
-
     st.session_state.history.append(
         {
             "role": "user",
@@ -1059,15 +1009,12 @@ if question:
     )
 
     with st.chat_message("user"):
-
         st.markdown(question)
 
     with st.chat_message("assistant"):
-
         with st.spinner(
             "Searching your documents and preparing an answer..."
         ):
-
             result = api_call(
                 "POST",
                 "/chat",
@@ -1080,15 +1027,12 @@ if question:
             )
 
         if result:
-
             st.session_state.session_id = result["session_id"]
 
             answer = result["answer"]
-
             st.markdown(answer)
 
             sources = result.get("sources") or []
-
             render_sources(sources)
 
             st.session_state.history.append(
@@ -1100,7 +1044,6 @@ if question:
             )
 
         else:
-
             st.warning(
                 "No answer was returned. The backend may be waking "
                 "up or may have encountered an error. Please retry."
@@ -1108,7 +1051,7 @@ if question:
 
 
 # ============================================================
-# MEDICAL DISCLAIMER
+# DOCUMENT NOTICE
 # ============================================================
 
 st.divider()
@@ -1116,10 +1059,8 @@ st.divider()
 st.markdown(
     """
     <div class="cb-footer">
-        Educational use only. CareBridge does not provide medical
-        diagnosis or treatment. Do not use it for emergencies,
-        treatment decisions, or medication changes. Always consult
-        a qualified healthcare professional.
+        Answers are generated from your uploaded documents.
+        Verify important details against the original sources.
     </div>
     """,
     unsafe_allow_html=True,
